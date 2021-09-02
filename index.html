@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>getUserMedia debugging tool</title>
+</head>
+
+<body>
+    <p>Debugging tool for getUserMedia camera functionality.</p>
+    <div>
+        <button id="qvga">320x240</button>
+        <button id="vga">640x480</button>
+        <button id="hd">1280x720</button>
+    </div>
+    <div>
+        <p>Available devices:</p>
+        <select id="devices"></select>
+        <button id="device">Use selected</button>
+    </div>
+    <div>
+        <p>Media constraints</p>
+        <textarea id="constraints" rows="8" cols="40"></textarea>
+        <textarea id="result" rows="8" cols="40"></textarea>
+    </div>
+    <p id="errormessage"></p>
+    <div id="videoblock">
+        <video id="usermedia" playsinline autoplay></video>
+    </div>
+    <div>
+        <button id="start">Start camera</button>
+        <button id="stop">Stop camera</button>
+    </div>
+
+    <script language="JavaScript">
+        let stream;
+        let curConstraints = { "video": {} };
+        const messagebox = document.querySelector('#errormessage');
+        const constraints = document.querySelector('#constraints');
+        const result = document.querySelector('#result');
+        const video = document.querySelector('video');
+        const videoblock = document.querySelector('#videoblock');
+        const devices = document.querySelector('#devices');
+
+        // Display device list
+        async function listDevices() {
+            let opt = document.createElement("option");
+                opt.value = null;
+                opt.innerHTML = 'Use default...';
+                devices.appendChild(opt);
+
+            const deviceList = await navigator.mediaDevices.enumerateDevices();
+            for (device of deviceList) {
+                if (device.kind === "videoinput") {
+                    console.log("Video input: " + JSON.stringify(device));
+                    let opt = document.createElement("option");
+                    opt.value = device.deviceId;
+                    opt.innerHTML = device.label;
+                    devices.appendChild(opt);
+                } else {
+                    console.log("Other input: " + JSON.stringify(device));
+                }
+            }
+        }
+
+        function errorMessage(who, what) {
+            const message = who + ': ' + what;
+            messagebox.innerText = message;
+            messagebox.style.display = 'block';
+            console.log(message);
+        }
+
+        function clearErrorMessage() {
+            messagebox.style.display = 'none';
+        }
+
+        function gotStream(mediaStream) {
+            stream = window.stream = mediaStream; // stream available to console
+            video.srcObject = mediaStream;
+            messagebox.style.display = 'none';
+            videoblock.style.display = 'block';
+            const track = mediaStream.getVideoTracks()[0];
+            const res = track.getConstraints();
+            result.innerHTML = JSON.stringify(res, null, 2);
+        }
+
+        function stopMedia() {
+            console.log('Attempting to stop camera...');
+
+            if (stream) {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            }
+            videoblock.style.display = 'none';
+            stream = null;
+        }
+
+        // Start stream
+        function getMedia(constraints) {
+            stopMedia();
+
+            console.log('Attempting to start camera...');
+            console.log('Using constraints: ' + JSON.stringify(constraints));
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(gotStream)
+                .catch(e => {
+                    errorMessage('getUserMedia', e.message, e.name);
+                });
+        }
+
+        videoblock.style.display = 'none';
+        messagebox.innerText = 'No error found...';
+        messagebox.style.display = 'block';
+
+        constraints.value = JSON.stringify(curConstraints, null, 2);
+
+        document.querySelector('#qvga').onclick = () => { curConstraints.video.width = 320; curConstraints.video.height = 240; constraints.value = JSON.stringify(curConstraints, null, 2); };
+        document.querySelector('#vga').onclick = () => { curConstraints.video.width = 640; curConstraints.video.height = 480; constraints.value = JSON.stringify(curConstraints, null, 2); };
+        document.querySelector('#hd').onclick = () => { curConstraints.video.width = 1280; curConstraints.video.height = 720; constraints.value = JSON.stringify(curConstraints, null, 2); };
+        document.querySelector('#device').onclick = () => {
+            const value = devices.options[devices.selectedIndex].value;
+            if (value !== 'null') {
+                curConstraints.video.deviceId = value;
+            } else {
+                curConstraints.video.deviceId = undefined;
+            }
+            constraints.value = JSON.stringify(curConstraints, null, 2);
+        };
+
+        document.querySelector('#start').onclick = () => { getMedia(JSON.parse(constraints.value)); };
+        document.querySelector('#stop').onclick = () => { stopMedia(); };
+
+        clearErrorMessage();
+        listDevices();
+    </script>
+</body>
