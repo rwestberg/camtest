@@ -132,12 +132,12 @@
             } catch (e) {
                 switch (e.name) {
                     case 'SecurityError':
+                    case 'NotAllowedError':
                         errorMessage('Camera access', 'not allowed');
                         break;
                     case 'NotFoundError':
                         errorMessage('Camera access', 'not found');
                         break;
-                    case 'NotAllowedError':
                     case 'OverconstrainedError':
                     case 'AbortError':
                     case 'NotReadableError':
