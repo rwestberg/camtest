@@ -105,16 +105,19 @@
 
         function decreaseResolution(constraints) {
             const fallbackResolutions = [
-                { width: 320, height: 240 },
-                { width: 640, height: 480 },
-                { width: 1280, height: 720 }
+                { width: undefined, height: undefined },
+                { width: 32000, height: 240 },
+                { width: 64000, height: 480 },
+                { width: 128000, height: 720 }
             ];
-            for (let i = fallbackResolutions.length - 1; i > 0; i--) {
-                if (constraints.video.width >= fallbackResolutions[i].width &&
-                    constraints.video.height >= fallbackResolutions[i].height) {
-                    constraints.video.width = fallbackResolutions[i - 1].width;
-                    constraints.video.height = fallbackResolutions[i - 1].height;
-                    return constraints;
+            if (constraints.video.width && constraints.video.height) {
+                for (let i = fallbackResolutions.length - 1; i > 0; i--) {
+                    if (constraints.video.width >= fallbackResolutions[i].width &&
+                        constraints.video.height >= fallbackResolutions[i].height) {
+                        constraints.video.width = fallbackResolutions[i - 1].width;
+                        constraints.video.height = fallbackResolutions[i - 1].height;
+                        return constraints;
+                    }
                 }
             }
             return null;
@@ -128,13 +131,14 @@
                 gotStream(stream);
             } catch (e) {
                 switch (e.name) {
-                    case 'NotAllowedErrorz':
+                    case 'SecurityError':
+                    case 'NotAllowedError':
                         errorMessage('Camera access', 'not allowed');
                         break;
                     case 'NotFoundError':
                         errorMessage('Camera access', 'not found');
                         break;
-                    case 'NotAllowedError':
+                    case 'OverconstrainedError':
                     case 'AbortError':
                     case 'NotReadableError':
                         const fallback = decreaseResolution(constraints);
@@ -143,12 +147,6 @@
                         } else {
                             errorMessage('Camera access', 'not readable');
                         }
-                        break;
-                    case 'OverconstrainedError':
-                        errorMessage('Camera access', 'overconstrained');
-                        break;
-                    case 'SecurityError':
-                        errorMessage('Camera access', 'security error');
                         break;
                     default:
                         errorMessage('Camera access', 'unknown error');
