@@ -106,7 +106,26 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 gotStream(stream);
             } catch (e) {
-                errorMessage('getUserMedia exception', e.name + " - " + e.message);
+                switch (e.name) {
+                    case 'NotAllowedError':
+                        errorMessage('Camera access', 'not allowed');
+                        break;
+                    case 'NotFoundError':
+                        errorMessage('Camera access', 'not found');
+                        break;
+                    case 'NotReadableError':
+                        errorMessage('Camera access', 'not readable');
+                        break;
+                    case 'OverconstrainedError':
+                        errorMessage('Camera access', 'overconstrained');
+                        break;
+                    case 'SecurityError':
+                        errorMessage('Camera access', 'security error');
+                        break;
+                    default:
+                        errorMessage('Camera access', 'unknown error');
+                        break;
+                }
             };
         }
 
