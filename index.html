@@ -106,9 +106,9 @@
         function decreaseResolution(constraints) {
             const fallbackResolutions = [
                 { width: undefined, height: undefined },
-                { width: 32000, height: 240 },
-                { width: 64000, height: 480 },
-                { width: 128000, height: 720 }
+                { width: 320, height: 240 },
+                { width: 640, height: 480 },
+                { width: 1280, height: 720 }
             ];
             if (constraints.video.width && constraints.video.height) {
                 for (let i = fallbackResolutions.length - 1; i > 0; i--) {
@@ -132,12 +132,12 @@
             } catch (e) {
                 switch (e.name) {
                     case 'SecurityError':
-                    case 'NotAllowedError':
                         errorMessage('Camera access', 'not allowed');
                         break;
                     case 'NotFoundError':
                         errorMessage('Camera access', 'not found');
                         break;
+                    case 'NotAllowedError':
                     case 'OverconstrainedError':
                     case 'AbortError':
                     case 'NotReadableError':
