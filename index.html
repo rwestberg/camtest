@@ -128,12 +128,13 @@
                 gotStream(stream);
             } catch (e) {
                 switch (e.name) {
-                    case 'NotAllowedError':
+                    case 'NotAllowedErrorz':
                         errorMessage('Camera access', 'not allowed');
                         break;
                     case 'NotFoundError':
                         errorMessage('Camera access', 'not found');
                         break;
+                    case 'NotAllowedError':
                     case 'AbortError':
                     case 'NotReadableError':
                         const fallback = decreaseResolution(constraints);
