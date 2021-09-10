@@ -97,10 +97,10 @@
 
         function startMedia() {
             console.log('Attempting to start camera...');
-            const constraints = JSON.parse(constraints.value);
+            const startConstraints = JSON.parse(constraints.value);
 
             stopMedia();
-            getMedia(constraints);
+            getMedia(startConstraints);
         }
 
         function decreaseResolution(constraints) {
