@@ -97,16 +97,17 @@
         }
 
         // Start stream
-        function getMedia(constraints) {
+        async function getMedia(constraints) {
             stopMedia();
 
             console.log('Attempting to start camera...');
             console.log('Using constraints: ' + JSON.stringify(constraints));
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(gotStream)
-                .catch(e => {
-                    errorMessage('getUserMedia', JSON.stringify(e));
-                });
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                gotStream(stream);
+            } catch (e) {
+                errorMessage('getUserMedia', JSON.stringify(e));
+            };
         }
 
         videoblock.style.display = 'none';
