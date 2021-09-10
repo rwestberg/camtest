@@ -45,9 +45,9 @@
         // Display device list
         async function listDevices() {
             let opt = document.createElement("option");
-                opt.value = null;
-                opt.innerHTML = 'Use default...';
-                devices.appendChild(opt);
+            opt.value = null;
+            opt.innerHTML = 'Use default...';
+            devices.appendChild(opt);
 
             const deviceList = await navigator.mediaDevices.enumerateDevices();
             for (device of deviceList) {
@@ -85,22 +85,43 @@
         }
 
         function stopMedia() {
-            console.log('Attempting to stop camera...');
-
             if (stream) {
+                console.log('Attempting to stop camera...');
                 stream.getTracks().forEach(track => {
                     track.stop();
                 });
+                stream = null;
             }
             videoblock.style.display = 'none';
-            stream = null;
+        }
+
+        function startMedia() {
+            console.log('Attempting to start camera...');
+            const constraints = JSON.parse(constraints.value);
+
+            stopMedia();
+            getMedia(constraints);
+        }
+
+        function decreaseResolution(constraints) {
+            const fallbackResolutions = [
+                { width: 320, height: 240 },
+                { width: 640, height: 480 },
+                { width: 1280, height: 720 }
+            ];
+            for (let i = 1; i < fallbackResolutions.length; i++) {
+                if (constraints.video.width >= fallbackResolutions[i].width &&
+                    constraints.video.height >= fallbackResolutions[i].height) {
+                    constraints.video.width = fallbackResolutions[i - 1].width;
+                    constraints.video.height = fallbackResolutions[i - 1].height;
+                    return constraints;
+                }
+                return null;
+            }
         }
 
         // Start stream
         async function getMedia(constraints) {
-            stopMedia();
-
-            console.log('Attempting to start camera...');
             console.log('Using constraints: ' + JSON.stringify(constraints));
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -113,8 +134,14 @@
                     case 'NotFoundError':
                         errorMessage('Camera access', 'not found');
                         break;
+                    case 'AbortError':
                     case 'NotReadableError':
-                        errorMessage('Camera access', 'not readable');
+                        const fallback = decreaseResolution(constraints);
+                        if (fallback) {
+                            getMedia(fallback);                            
+                        } else {
+                            errorMessage('Camera access', 'not readable');
+                        }
                         break;
                     case 'OverconstrainedError':
                         errorMessage('Camera access', 'overconstrained');
@@ -148,7 +175,7 @@
             constraints.value = JSON.stringify(curConstraints, null, 2);
         };
 
-        document.querySelector('#start').onclick = () => { getMedia(JSON.parse(constraints.value)); };
+        document.querySelector('#start').onclick = () => { startMedia(); };
         document.querySelector('#stop').onclick = () => { stopMedia(); };
 
         clearErrorMessage();
