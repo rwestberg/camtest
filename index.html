@@ -139,7 +139,7 @@
                     case 'NotReadableError':
                         const fallback = decreaseResolution(constraints);
                         if (fallback) {
-                            getMedia(fallback);                            
+                            await getMedia(fallback);                            
                         } else {
                             errorMessage('Camera access', 'not readable');
                         }
