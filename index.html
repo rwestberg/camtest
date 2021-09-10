@@ -109,7 +109,7 @@
                 { width: 640, height: 480 },
                 { width: 1280, height: 720 }
             ];
-            for (let i = 1; i < fallbackResolutions.length; i++) {
+            for (let i = fallbackResolutions.length - 1; i > 0; i--) {
                 if (constraints.video.width >= fallbackResolutions[i].width &&
                     constraints.video.height >= fallbackResolutions[i].height) {
                     constraints.video.width = fallbackResolutions[i - 1].width;
