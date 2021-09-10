@@ -106,7 +106,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 gotStream(stream);
             } catch (e) {
-                errorMessage('getUserMedia exception', JSON.stringify(e));
+                errorMessage('getUserMedia exception', JSON.stringify(e.message));
             };
         }
 
