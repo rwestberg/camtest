@@ -45,9 +45,9 @@
         // Display device list
         async function listDevices() {
             let opt = document.createElement("option");
-                opt.value = null;
-                opt.innerHTML = 'Use default...';
-                devices.appendChild(opt);
+            opt.value = null;
+            opt.innerHTML = 'Use default...';
+            devices.appendChild(opt);
 
             const deviceList = await navigator.mediaDevices.enumerateDevices();
             for (device of deviceList) {
@@ -85,28 +85,74 @@
         }
 
         function stopMedia() {
-            console.log('Attempting to stop camera...');
-
             if (stream) {
+                console.log('Attempting to stop camera...');
                 stream.getTracks().forEach(track => {
                     track.stop();
                 });
+                stream = null;
             }
             videoblock.style.display = 'none';
-            stream = null;
+        }
+
+        function startMedia() {
+            console.log('Attempting to start camera...');
+            const startConstraints = JSON.parse(constraints.value);
+
+            stopMedia();
+            getMedia(startConstraints);
+        }
+
+        function decreaseResolution(constraints) {
+            const fallbackResolutions = [
+                { width: undefined, height: undefined },
+                { width: 320, height: 240 },
+                { width: 640, height: 480 },
+                { width: 1280, height: 720 }
+            ];
+            if (constraints.video.width && constraints.video.height) {
+                for (let i = fallbackResolutions.length - 1; i > 0; i--) {
+                    if (constraints.video.width >= fallbackResolutions[i].width &&
+                        constraints.video.height >= fallbackResolutions[i].height) {
+                        constraints.video.width = fallbackResolutions[i - 1].width;
+                        constraints.video.height = fallbackResolutions[i - 1].height;
+                        return constraints;
+                    }
+                }
+            }
+            return null;
         }
 
         // Start stream
-        function getMedia(constraints) {
-            stopMedia();
-
-            console.log('Attempting to start camera...');
+        async function getMedia(constraints) {
             console.log('Using constraints: ' + JSON.stringify(constraints));
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(gotStream)
-                .catch(e => {
-                    errorMessage('getUserMedia', e.message, e.name);
-                });
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                gotStream(stream);
+            } catch (e) {
+                switch (e.name) {
+                    case 'SecurityError':
+                    case 'NotAllowedError':
+                        errorMessage('Camera access', 'not allowed');
+                        break;
+                    case 'NotFoundError':
+                        errorMessage('Camera access', 'not found');
+                        break;
+                    case 'OverconstrainedError':
+                    case 'AbortError':
+                    case 'NotReadableError':
+                        const fallback = decreaseResolution(constraints);
+                        if (fallback) {
+                            await getMedia(fallback);
+                        } else {
+                            errorMessage('Camera access', 'not readable');
+                        }
+                        break;
+                    default:
+                        errorMessage('Camera access', 'unknown error');
+                        break;
+                }
+            };
         }
 
         videoblock.style.display = 'none';
@@ -128,7 +174,7 @@
             constraints.value = JSON.stringify(curConstraints, null, 2);
         };
 
-        document.querySelector('#start').onclick = () => { getMedia(JSON.parse(constraints.value)); };
+        document.querySelector('#start').onclick = () => { startMedia(); };
         document.querySelector('#stop').onclick = () => { stopMedia(); };
 
         clearErrorMessage();
